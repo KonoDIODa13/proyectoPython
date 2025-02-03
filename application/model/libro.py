@@ -5,6 +5,7 @@ from autor import Autor
 from genero import Genero
 
 class libro(BaseModel):
+    id: int
     titulo:str
     autor: Autor
     genero: Genero

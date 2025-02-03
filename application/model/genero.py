@@ -3,4 +3,5 @@ from datetime import datetime
 from pydantic import BaseModel
 
 class Genero(BaseModel):
+    id:int
     genero:str

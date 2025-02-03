@@ -4,12 +4,12 @@ import uvicorn
 
 from application.routers import usuario
 
-# from app.db.database import Base, engine
+from application.db.database import Base, engine
 
-"""def create_tables():
+def create_tables():
     Base.metadata.create_all(bind=engine)
     
-create_tables()"""
+create_tables()
 
 app = FastAPI()
 app.include_router(usuario.router)
