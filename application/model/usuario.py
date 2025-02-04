@@ -7,4 +7,9 @@ class Usuario (BaseModel):
     nombre:str
     gmail:str
     contrasenna: str
+
+class UsuarioDTO(BaseModel):
+    nombre:str
+    gmail:str
+    contrasenna: str
     

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from application.model.usuario import Usuario
+from application.model.usuario import Usuario,UsuarioDTO
 from application.db.database import get_db
 from sqlalchemy.orm import Session
 from application.db import models
@@ -15,15 +15,23 @@ def getUsuarios(database:Session=Depends(get_db)):
     usuarios = database.query(models.Usuario).all()
     return usuarios
 
+@router.get("/{id}")
+def getUsuarioByID(id:int ,database:Session=Depends(get_db)):
+    usuario = usuarioByID(id, database)
+    if usuario!=None:
+        return {"Usuario": usuario}
+    else:
+        return {"Respuesta": "Error al buscar usuario: No existe diche Usuario."}
+
+
 @router.post("/add")
-def addUsuarios(usuarioBody: Usuario, database:Session=Depends(get_db)):
-    dick_usuario= usuarioBody.model_dump()
+def addUsuarios(usuarioDTO: UsuarioDTO, database:Session=Depends(get_db)):
     usuario= models.Usuario(
-        nombre = dick_usuario["nombre"],
-        gmail = dick_usuario['gmail'],
-        contrasenna = dick_usuario['contrasenna']
+        nombre = usuarioDTO.nombre,
+        gmail = usuarioDTO.gmail,
+        contrasenna = usuarioDTO.contrasenna
     )
-    if(existeUsuario(usuario, database)):
+    if(existeUsuario(usuario.nombre, usuario.contrasenna, database)):
         return {"Respuesta": "Error al insertar: Usuario ya existente en bd."}
     else:
         database.add(usuario)
@@ -34,11 +42,38 @@ def addUsuarios(usuarioBody: Usuario, database:Session=Depends(get_db)):
             "Usuario": usuario
                 } 
 
+@router.patch("/{id}/update")
+def updateUsuario(id:int, usuarioDTO : UsuarioDTO, database: Session=Depends(get_db)):
+    usuario= usuarioByID(id, database)
+    if usuario:
+        """usuario.nombre= usuarioDTO.nombre
+        usuario.gmail= usuarioDTO.gmail
+        usuario.contrasenna= usuarioDTO.contrasenna"""
+        usuario.update(usuarioDTO.model_dump(exclude_unset=True))
+        database.commit()
+        return {"Respuesta": "Usuario modificado con exito.",
+                "Usuario": usuario}
+    else:
+        return {"Respuesta": "Error al borrar el usuario: No existe diche Usuario."}
 
-def existeUsuario(usuario: Usuario,database: Session):
+
+@router.delete("/{id}/delete")
+def deleteUsuario(id:int, database: Session=Depends(get_db)):
+    usuario= usuarioByID(id, database)
+    if usuario:
+        return {"Respuesta": "Error al borrar el usuario: No existe diche Usuario."}
+    else:
+        database.delete(usuario)
+        database.commit()
+        return {"Respuesta": "Usuario eliminado con exito."}
+
+def existeUsuario(nombre:str, contrasenna:str, database: Session):
     data = database.query(models.Usuario).all()
     existe= False
     for usuarioDB in data:
-        if usuarioDB.nombre == usuario.nombre and usuarioDB.contrasenna == usuario.contrasenna:
+        if usuarioDB.nombre == nombre and usuarioDB.contrasenna == contrasenna:
             existe=True
     return existe
+
+def usuarioByID(id:int, database: Session=Depends(get_db)):
+    return database.query(models.Usuario).filter(models.Usuario.id==id).first()

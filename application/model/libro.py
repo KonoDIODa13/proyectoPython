@@ -11,3 +11,10 @@ class libro(BaseModel):
     genero: Genero
     descripcion: str
     fecha_publicacion: datetime
+    
+class LibroDTO (BaseModel):
+    titulo:str
+    autor: Autor
+    genero: Genero
+    descripcion: str
+    fecha_publicacion: datetime

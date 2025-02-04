@@ -6,3 +6,7 @@ class Autor(BaseModel):
     id:int
     nombre:str
     edad: int
+
+class AutorDTO (BaseModel):
+    nombre:str
+    edad: int
