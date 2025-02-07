@@ -18,10 +18,12 @@ def getUsuarios(database:Session=Depends(get_db)):
 @router.get("/{id}")
 def getUsuarioByID(id:int ,database:Session=Depends(get_db)):
     usuario = usuarioByID(id, database)
-    if usuario!=None:
-        return {"Usuario": usuario}
-    else:
+    #usuario=database.query(models.Usuario).filter(models.Usuario.id==id)
+    if not usuario:
         return {"Respuesta": "Error al buscar usuario: No existe diche Usuario."}
+    else:
+
+        return {"Usuario": showUsuario(usuario)}
 
 
 @router.post("/add")
@@ -39,28 +41,32 @@ def addUsuarios(usuarioDTO: UsuarioDTO, database:Session=Depends(get_db)):
         database.refresh(usuario)
         return {
             "Respuesta": "Usuario creado.",
-            "Usuario": usuario
+            "Usuario": showUsuario(usuario)
                 } 
 
 @router.patch("/{id}/update")
 def updateUsuario(id:int, usuarioDTO : UsuarioDTO, database: Session=Depends(get_db)):
     usuario= usuarioByID(id, database)
-    if usuario:
-        """usuario.nombre= usuarioDTO.nombre
-        usuario.gmail= usuarioDTO.gmail
-        usuario.contrasenna= usuarioDTO.contrasenna"""
-        usuario.update(usuarioDTO.model_dump(exclude_unset=True))
-        database.commit()
-        return {"Respuesta": "Usuario modificado con exito.",
-                "Usuario": usuario}
-    else:
+    if not usuario:
         return {"Respuesta": "Error al borrar el usuario: No existe diche Usuario."}
+    else:
+        """lo hago asi:
+        Primero, al usuario que tengo de la bd lo modifico.
+        Segundo, preparo un usuario para mostrar
+        """ 
+        usuario.nombre= usuarioDTO.nombre
+        usuario.gmail= usuarioDTO.gmail
+        usuario.contrasenna= usuarioDTO.contrasenna
+        database.commit()
+        return {"Respuesta": "Usuario modificado con éxito.",
+                "Usuario": showUsuario(usuario)}
 
 
 @router.delete("/{id}/delete")
 def deleteUsuario(id:int, database: Session=Depends(get_db)):
     usuario= usuarioByID(id, database)
-    if usuario:
+    #usuario=database.query(models.Usuario).filter(models.Usuario.id==id)
+    if not usuario:
         return {"Respuesta": "Error al borrar el usuario: No existe diche Usuario."}
     else:
         database.delete(usuario)
@@ -77,3 +83,12 @@ def existeUsuario(nombre:str, contrasenna:str, database: Session):
 
 def usuarioByID(id:int, database: Session=Depends(get_db)):
     return database.query(models.Usuario).filter(models.Usuario.id==id).first()
+     
+
+def showUsuario(user:Usuario):
+    usuario=models.Usuario(
+        nombre=user.nombre,
+        gmail=user.gmail,
+        contrasenna=user.contrasenna,
+        )
+    return usuario
