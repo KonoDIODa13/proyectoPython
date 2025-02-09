@@ -1,14 +1,14 @@
 from datetime import datetime
 # from typing import Optional
 from pydantic import BaseModel
-from autor import Autor
-from genero import Genero
+from application.model.autor import AutorDTO
+from application.model.genero import GeneroDTO
 
-class libro(BaseModel):
+class Libro(BaseModel):
     id: int
     titulo:str
-    autor: Autor
-    genero: Genero
+    autor: AutorDTO
+    genero: GeneroDTO
     descripcion: str
     fecha_publicacion: datetime
     
