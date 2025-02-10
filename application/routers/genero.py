@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from application.db import models
 from typing import List
 
+from application.model.libro import Libro
+
 router = APIRouter(prefix="/genero", tags=["Generos"])
 
 
@@ -17,11 +19,10 @@ def getGeneros(database: Session = Depends(get_db)):
 @router.get("/{id}")
 def getGeneroByID(id: int, database: Session = Depends(get_db)):
     genero = generoByID(id, database)
-    if not genero.first():
+    if not genero:
         return {"Respuesta": "Error al buscar genero: No existe diche genero."}
     else:
-
-        return {"genero": showGenero(genero.first())}
+        return {"genero": genero}
 
 
 @router.post("/add")
@@ -33,27 +34,27 @@ def addGeneros(generoDTO: GeneroDTO, database: Session = Depends(get_db)):
         database.add(genero)
         database.commit()
         database.refresh(genero)
-        return {"Respuesta": "genero creado.", "genero": showGenero(genero)}
+        return {"Respuesta": "genero creado.", "genero": genero}
 
 
 @router.patch("/{id}/update")
 def updateGenero(id: int, generoDTO: GeneroDTO, database: Session = Depends(get_db)):
     genero = generoByID(id, database)
-    if not genero.first():
+    if not genero:
         return {"Respuesta": "Error al borrar el género: No existe diche género."}
     else:
-        genero.update(generoDTO.model_dump(exclude_unset=True))
+        genero.genero = generoDTO.genero
         database.commit()
         return {
             "Respuesta": "género modificado con éxito.",
-            "genero": showGenero(genero.first()),
+            "genero": genero,
         }
 
 
 @router.delete("/{id}/delete")
 def deleteGenero(id: int, database: Session = Depends(get_db)):
     genero = generoByID(id, database)
-    if not genero.first():
+    if not genero:
         return {"Respuesta": "Error al borrar el género: No existe diche genero."}
     else:
         database.delete(genero)
@@ -70,10 +71,25 @@ def existeGenero(genre: str, database: Session):
     return existe
 
 
-def generoByID(id: int, database: Session = Depends(get_db)):
-    return database.query(models.Genero).filter(models.Genero.id == id)
+def generoByID(id: int, database: Session):
+    generoBD = database.query(models.Genero).filter(models.Genero.id == id).first()
 
-
-def showGenero(genre: Genero):
-    genero = models.Genero(genero=genre.genero)
-    return genero
+    if generoBD:
+        genero = Genero(
+            id=generoBD.id,
+            genero=generoBD.genero,
+            libros=[
+                Libro(
+                    id=libro.id,
+                    titulo=libro.titulo,
+                    autor_id=libro.autor_id,
+                    genero_id=libro.genero_id,
+                    descripcion=libro.descripcion,
+                    fecha_publicacion=libro.fecha_publicacion,
+                )
+                for libro in generoBD.libros
+            ],
+        )
+        return genero
+    else:
+        return None

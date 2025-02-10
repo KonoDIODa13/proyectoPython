@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from application.model.autor import Autor, AutorDTO
+from application.model.libro import Libro
 from application.db.database import get_db
 from sqlalchemy.orm import Session
 from application.db import models
@@ -10,49 +11,49 @@ router = APIRouter(prefix="/autor", tags=["Autores"])
 
 @router.get("/all", response_model=List[Autor])
 def getAutor(database: Session = Depends(get_db)):
-    autores = database.query(models.Libro).all()
+    autores = database.query(models.Autor).all()
     return autores
 
 
 @router.get("/{id}")
 def getAutorByID(id: int, database: Session = Depends(get_db)):
-    autor = generoByID(id, database)
-    if not autor.first():
+    autor = autorByID(id, database)
+    if not autor:
         return {"Respuesta": "Error al buscar genero: No existe diche genero."}
     else:
-
-        return {"genero": showAutor(autor.first())}
+        return {"autor": autor}
 
 
 @router.post("/add")
 def addAutor(autorDTO: AutorDTO, database: Session = Depends(get_db)):
-    autor = models.Libro(nombre=autorDTO.nombre, edad=autorDTO.edad)
-    if existeGenero(autor.nombre, database):
+    autor = models.Autor(nombre=autorDTO.nombre, edad=autorDTO.edad)
+    if existeAutor(autor.nombre, database):
         return {"Respuesta": "Error al insertar: autor ya existente en bd."}
     else:
         database.add(autor)
         database.commit()
         database.refresh(autor)
-        return {"Respuesta": "autor creado.", "Autor": showAutor(autor)}
+        return {"Respuesta": "autor creado.", "Autor": autor}
 
 
 @router.patch("/{id}/update")
 def updateAutor(id: int, autorDTO: AutorDTO, database: Session = Depends(get_db)):
-    autor = generoByID(id, database)
-    if not autor.first():
+    autor = autorByID(id, database)
+    if not autor:
         return {"Respuesta": "Error al borrar el autor: No existe diche autor."}
     else:
-        autor.update(autorDTO.model_dump(exclude_unset=True))
+        autor.nombre = autorDTO.nombre
+        autor.edad = autor.edad
         database.commit()
         return {
             "Respuesta": "autor modificado con éxito.",
-            "genero": showAutor(autor.first()),
+            "genero": autor,
         }
 
 
 @router.delete("/{id}/delete")
 def deleteAutor(id: int, database: Session = Depends(get_db)):
-    autor = generoByID(id, database)
+    autor = autorByID(id, database)
     if not autor.first():
         return {"Respuesta": "Error al borrar el autor: No existe diche autor."}
     else:
@@ -61,8 +62,8 @@ def deleteAutor(id: int, database: Session = Depends(get_db)):
         return {"Respuesta": "autor eliminado con exito."}
 
 
-def existeGenero(nombre, database: Session):
-    data = database.query(models.Libro).all()
+def existeAutor(nombre, database: Session):
+    data = database.query(models.Autor).all()
     existe = False
     for autorDB in data:
         if autorDB.nombre == nombre:
@@ -70,10 +71,26 @@ def existeGenero(nombre, database: Session):
     return existe
 
 
-def generoByID(id: int, database: Session = Depends(get_db)):
-    return database.query(models.Libro).filter(models.Libro.id == id)
+def autorByID(id: int, database: Session):
+    autorBD = database.query(models.Autor).filter(models.Autor.id == id).first()
 
-
-def showAutor(author: Autor):
-    autor = models.Libro(nombre=author.nombre, edad=author.edad)
-    return autor
+    if autorBD:
+        autor = Autor(
+            id=autorBD.id,
+            nombre=autorBD.nombre,
+            edad=autorBD.edad,
+            libros=[
+                Libro(
+                    id=libro.id,
+                    titulo=libro.titulo,
+                    autor_id=libro.autor_id,
+                    genero_id=libro.genero_id,
+                    descripcion=libro.descripcion,
+                    fecha_publicacion=libro.fecha_publicacion,
+                )
+                for libro in autorBD.libros
+            ],
+        )
+        return autor
+    else:
+        return None

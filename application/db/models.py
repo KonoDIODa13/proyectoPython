@@ -16,14 +16,14 @@ class Genero(Base):
     __tablename__= "genero"
     id = Column(Integer,primary_key=True,autoincrement=True)
     genero = Column(String)
-    libro_id = relationship("Libro", backref="genero", cascade="delete, merge")
+    libros = relationship("Libro", backref="genero", cascade="all, delete-orphan")
 
 class Autor(Base):
     __tablename__= "autor"
     id = Column(Integer,primary_key=True,autoincrement=True)
     nombre = Column(String)
     edad = Column(Integer)
-    libro_id = relationship("Libro", backref="autor", cascade="delete, merge")
+    libros = relationship("Libro", backref="autor", cascade="all, delete-orphan")
 
 class Libro(Base):
     __tablename__= "libro"
