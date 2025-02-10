@@ -4,12 +4,13 @@ from sqlalchemy.orm import sessionmaker
 
 SQLALCHEMY_DATABASE_URL = "postgresql://odoo:odoo@localhost:5342/library_of_ohara"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine,autocommit=False,autoflush=False)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
 
+
 def get_db():
-    db = SessionLocal() # Crear una nueva sesión
+    db = SessionLocal()  # Crear una nueva sesión
     try:
-        yield db # Devuelve la sesión para su uso
+        yield db  # Devuelve la sesión para su uso
     finally:
-        db.close() # Cierra la sesión después de usarla
+        db.close()  # Cierra la sesión después de usarla
