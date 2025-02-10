@@ -21,7 +21,7 @@ def getUsuarioByID(id: int, database: Session = Depends(get_db)):
         return {"Respuesta": "Error al buscar usuario: No existe diche Usuario."}
     else:
 
-        return {"Usuario": showUsuario(usuario)}
+        return {"Usuario": usuario}
 
 
 @router.post("/add")
@@ -37,7 +37,7 @@ def addUsuarios(usuarioDTO: UsuarioDTO, database: Session = Depends(get_db)):
         database.add(usuario)
         database.commit()
         database.refresh(usuario)
-        return {"Respuesta": "Usuario creado.", "Usuario": showUsuario(usuario)}
+        return {"Respuesta": "Usuario creado.", "Usuario": usuario}
 
 
 @router.patch("/{id}/update")
@@ -52,14 +52,14 @@ def updateUsuario(id: int, usuarioDTO: UsuarioDTO, database: Session = Depends(g
         database.commit()
         return {
             "Respuesta": "Usuario modificado con éxito.",
-            "Usuario": showUsuario(usuario),
+            "Usuario": usuario,
         }
 
 
 @router.delete("/{id}/delete")
 def deleteUsuario(id: int, database: Session = Depends(get_db)):
     usuario = usuarioByID(id, database)
-    if not usuario.first():
+    if not usuario:
         return {"Respuesta": "Error al borrar el usuario: No existe diche Usuario."}
     else:
         database.delete(usuario)
@@ -79,11 +79,3 @@ def existeUsuario(nombre: str, contrasenna: str, database: Session):
 def usuarioByID(id: int, database: Session = Depends(get_db)):
     return database.query(models.Usuario).filter(models.Usuario.id == id).first()
 
-
-def showUsuario(user: Usuario):
-    usuario = models.Usuario(
-        nombre=user.nombre,
-        gmail=user.gmail,
-        contrasenna=user.contrasenna,
-    )
-    return usuario

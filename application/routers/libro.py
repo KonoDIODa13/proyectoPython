@@ -1,10 +1,5 @@
 from fastapi import APIRouter, Depends
-from application.model.libro import Libro, LibroDTO, LibroUpdate
-
-"""
-from application.model.autor import Autor, AutorDTO
-from application.model.genero import Genero, GeneroDTO
-"""
+from application.model.libro import Libro, LibroDTO
 from application.db.database import get_db
 from sqlalchemy.orm import Session
 from application.db import models
@@ -26,7 +21,7 @@ def getLibroByID(id: int, database: Session = Depends(get_db)):
         return {"Respuesta": "Error al buscar libro: No existe diche libro."}
     else:
 
-        return {"Libro": showLibro(libro)}
+        return {"Libro": libro}
 
 
 @router.post("/add")
@@ -47,31 +42,27 @@ def addLibro(libroDTO: LibroDTO, database: Session = Depends(get_db)):
     else:
         database.add(libro)
         database.commit()
-        database.refresh(libro)
-        return {"Respuesta": "libro creado.", "Libro": showLibro(libro)}
+        return {"Respuesta": "libro creado.", "Libro": libro}
 
 
 @router.patch("/{id}/update")
-#def updateLibro(id: int, libroUpdate: LibroUpdate, database: Session = Depends(get_db)): en caso de que pete con el de libroDTO
 def updateLibro(id: int, libroDTO: LibroDTO, database: Session = Depends(get_db)):
     libro = libroByID(id, database)
     if not libro:
         return {"Respuesta": "Error al borrar el libro: No existe diche libro."}
     else:
-        if (
-            existeGenero(libroDTO.genero_id, database)
-            and existeAutor(libroDTO.autor_id, database)
+        if existeGenero(libroDTO.genero_id, database) and existeAutor(
+            libroDTO.autor_id, database
         ):
-            libro.titulo= libroDTO.titulo
-            libro.autor_id= libroDTO.autor_id
-            libro.genero_id= libroDTO.genero_id
-            libro.descripcion= libroDTO.descripcion
-            libro.fecha_publicacion= libroDTO.fecha_publicacion
-            
+            libro.titulo = libroDTO.titulo
+            libro.autor_id = libroDTO.autor_id
+            libro.genero_id = libroDTO.genero_id
+            libro.descripcion = libroDTO.descripcion
+            libro.fecha_publicacion = libroDTO.fecha_publicacion
             database.commit()
             return {
                 "Respuesta": "libro modificado con éxito.",
-                "Libro": showLibro(libro),
+                "Libro": libro,
             }
         else:
             return {"Respuesta": "no se puede modificar el libro"}
@@ -80,10 +71,10 @@ def updateLibro(id: int, libroDTO: LibroDTO, database: Session = Depends(get_db)
 @router.delete("/{id}/delete")
 def deleteLibro(id: int, database: Session = Depends(get_db)):
     libro = libroByID(id, database)
-    if not libro.first():
+    if not libro:
         return {"Respuesta": "Error al borrar el libro: No existe diche libro."}
     else:
-        database.delete(libro.first())
+        database.delete(libro)
         database.commit()
         return {"Respuesta": "libro eliminado con exito."}
 
@@ -117,14 +108,3 @@ def existeAutor(id_autor: int, database: Session):
 
 def libroByID(id: int, database: Session = Depends(get_db)):
     return database.query(models.Libro).filter(models.Libro.id == id).first()
-
-
-def showLibro(book: Libro):
-    libro = models.Libro(
-        titulo=book.titulo,
-        descripcion=book.descripcion,
-        fecha_publicacion=book.fecha_publicacion,
-        genero_id=book.genero_id,
-        autor_id=book.autor_id,
-    )
-    return libro
